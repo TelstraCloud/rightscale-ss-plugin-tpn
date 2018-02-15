@@ -18,7 +18,7 @@ managed via RightScale. It contains:
 1. Create a Credential in Cloud Management called `TPN_ACCESS_TOKEN`. Generate the access_token value using the TPN API (See https://dev.telstra.com/content/getting-started-tpn).
 
 # Usage
-1. Launch the `TPN Topology` CloudApp from Self Service Designer or Catalog.
+1. Launch the `TPN Topology` CloudApp from the Self Service Designer or Catalog.
 1. Provide a name for the cloud app and click Launch.
 1. A Topology will be provisioned in TPN with the same name as provided. The Topology's UUID and Status will be displayed as outputs.
 1. Click Terminte to deprovision the Topology

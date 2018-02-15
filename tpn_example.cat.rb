@@ -1,6 +1,7 @@
 name 'Telstra Programmable Network Topology'
 rs_ca_ver 20161221
-short_description "Creates a Telstra Programmable Network Topology"
+short_description "![TPN Logo](https://demostaticimages.blob.core.windows.net/icons/tpn_icon.png =85x64)\n
+Creates a Telstra Programmable Network Topology"
 
 import "sys_log"
 import "plugins/telstra_programmable_network"
