@@ -27,7 +27,21 @@ resource "topology", type: "telstra_programmable_network.topology" do
   # are put on the deployment
   name first(split(@@deployment.name, last(split(@@deployment.name, /^[^-]+/))))
   
-  # FIXME getting the description from the deployment isn't working...
+  # description overwritten by the launch definition
   description "RightScale CAT created"
-  #description last(split(@@deployment.description, /CloudApp description: /))
+end
+
+operation "launch" do
+  label "Launch"
+  definition "launch"
+end
+
+define launch(@topology) return @topology do
+  # set the description as it is not available on the @@deployment in the
+  # resource definition
+  $topology_object = to_object(@topology)
+  $topology_object["fields"]["description"] = @@execution.description
+  @topology = $topology_object
+  
+  provision(@topology)
 end
