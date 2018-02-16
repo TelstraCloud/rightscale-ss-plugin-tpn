@@ -33,21 +33,38 @@ operation "launch" do
   } end
 end
 
-define gen_launch() return @tops, @my_top, $my_top_str, $tops_str, $deployment_str do
-  $deployment_str = @@deployment.description
+define gen_launch() return @tops, @my_top, @endpoints, $endpoints_str, $endpoint_str, $my_top_str, $tops_str do
+  #$deployment_str = @@deployment.description
+  #call start_debugging()
+  
+  # @tops = telstra_programmable_network.topology.list()
+  # $tops_str = to_json(to_object(@tops))
+  
+  #call sys_log.detail("@tops: " + to_json(to_object(@tops)))
+  #call stop_debugging()
+
+  
+  # $customer_uuid = to_object(@tops)["details"][1]["customer_uuid"]
+  #call sys_log.detail("$customer_uuid: " + $customer_uuid)
   call start_debugging()
-  @tops = telstra_programmable_network.topology.list()
+  # @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)  
+  # $endpoints_str = to_json(to_object(@endpoints))
+
+  @endpoint = telstra_programmable_network.endpoint.show(uuid: "8f85450f-e5ca-4341-8406-6305abfc2ce5")
+  $endpoint_str = to_json(to_object(@endpoint))
   call stop_debugging()
 
-  call start_debugging()
+  #call sys_log.detail("$endpoints_str: " + $endpoints_str)
+  
+  # call start_debugging()
   # Don't iterate on the resources as this takes ages. Perhaps it is doing an
   # additional API call for each one?
-  $tops = to_object(@tops)
-  $tops_str = to_json($tops)
+  # $tops = to_object(@tops)
+  # 
   # foreach $top in $tops do
   #   $tops_str = $tops_str + $top["name"] + ", " + $top["status"] + ", " + $top["uuid"] + "\n"
   # end
-  call stop_debugging()
+  # call stop_debugging()
 
   # call start_debugging()
   # @my_top = telstra_programmable_network.topology.show(uuid: "9a8ee002-e05f-4a83-af92-013a36d7bb26")

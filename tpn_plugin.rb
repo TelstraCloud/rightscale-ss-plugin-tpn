@@ -59,6 +59,38 @@ plugin "telstra_programmable_network" do
 
     output "uuid","name","description","status","customer_uuid","nsd_uuid","gui_topology","created_by","creation_date","deletion_date"
   end
+
+  type "endpoint" do
+    href_templates "/1.0.0/inventory/endpoint/{{datacenter[0].port[0].endpointuuid}}","/1.0.0/inventory/endpoint/{{endpointlist[*].endpointuuid}}"
+    
+    provision "no_operation"
+    delete "no_operation"
+
+    action "list" do 
+      verb "GET"
+      path "/1.0.0/inventory/endpoints/customeruuid/$customer_uuid"
+      type "endpoint"
+
+      field "customer_uuid" do 
+        location "path"
+      end
+
+      output_path "endpointlist"
+    end
+
+    action "show" do
+      path "/1.0.0/inventory/endpoint/$uuid"
+      verb "GET"
+      type "endpoint"
+
+      field "uuid" do 
+        location "path"
+      end
+    end
+  end
+end
+
+define no_operation(@declaration) do
 end
 
 resource_pool "telstra_programmable_network" do
