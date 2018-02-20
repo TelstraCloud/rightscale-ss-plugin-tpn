@@ -36,26 +36,45 @@ end
 define gen_launch() return @tops, @my_top, @endpoints, $endpoints_str, $endpoint_str, $my_top_str, $tops_str do
   #$deployment_str = @@deployment.description
   #call start_debugging()
-  
-  # @tops = telstra_programmable_network.topology.list()
   # $tops_str = to_json(to_object(@tops))
   
   #call sys_log.detail("@tops: " + to_json(to_object(@tops)))
-  #call stop_debugging()
 
+  # get the customer uuid
+  @tops = telstra_programmable_network.topology.list()
+  $customer_uuid = to_object(@tops)["details"][1]["customer_uuid"]
+  call sys_log.detail("$customer_uuid: " + $customer_uuid)
   
-  # $customer_uuid = to_object(@tops)["details"][1]["customer_uuid"]
-  #call sys_log.detail("$customer_uuid: " + $customer_uuid)
-  call start_debugging()
+  #@endpoint = telstra_programmable_network.endpoint.show(uuid: "cfc3ff96-5557-4aa2-931b-8e6e11ba48d6")
+
+  # get all the endpoints for this customer
+  @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
+  $endpoints_str = to_json(to_object(@endpoints))
+  call sys_log.detail("$endpoints_str: " + $endpoints_str)
+  
+  
+  
+  # sub task_label: "retrieving all endpoints' ports", on_error: skip do
+  #   @port = @endpoints.port
+  # end
+  # call stop_debugging()
+  # $port_str = to_json(to_object(@port))
+  # call sys_log.detail("$port_str: " + $port_str)
+
+  # iterate through the endpoints and log the details
+  foreach @endpoint in @endpoints do
+    call start_debugging()
+    $endpoint_str = to_s(to_object(@endpoint))
+    call stop_debugging()
+    call sys_log.detail("$endpoint_str: " + $endpoint_str)
+  end
+  
   # @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)  
   # $endpoints_str = to_json(to_object(@endpoints))
 
-  @endpoint = telstra_programmable_network.endpoint.show(uuid: "8f85450f-e5ca-4341-8406-6305abfc2ce5")
-  $endpoint_str = to_json(to_object(@endpoint))
-  call stop_debugging()
-
-  #call sys_log.detail("$endpoints_str: " + $endpoints_str)
+  # @endpoint = telstra_programmable_network.endpoint.show(uuid: "8f85450f-e5ca-4341-8406-6305abfc2ce5")
   
+  # call stop_debugging()
   # call start_debugging()
   # Don't iterate on the resources as this takes ages. Perhaps it is doing an
   # additional API call for each one?
@@ -76,6 +95,10 @@ define gen_launch() return @tops, @my_top, @endpoints, $endpoints_str, $endpoint
   # $my_top_str = $my_top["details"][0]["name"] + "{ status: " + $my_top["details"][0]["status"] + ", uuid: " + $my_top["details"][0]["uuid"] + " }"
   # call stop_debugging()
 end
+
+# define error_endpoint do
+#   $_error_behavior = "skip"
+# end
 
 define start_debugging() do
   if $$debugging == false || logic_and($$debugging != false, $$debugging != true)

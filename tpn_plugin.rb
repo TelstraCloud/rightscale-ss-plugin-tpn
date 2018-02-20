@@ -66,7 +66,7 @@ plugin "telstra_programmable_network" do
     provision "no_operation"
     delete "no_operation"
 
-    action "list" do 
+    action "list" do
       verb "GET"
       path "/1.0.0/inventory/endpoints/customeruuid/$customer_uuid"
       type "endpoint"
@@ -75,17 +75,26 @@ plugin "telstra_programmable_network" do
         location "path"
       end
 
+      # output "datacenteruuid", "endpointuuid"
       output_path "endpointlist"
     end
 
-    action "show" do
-      path "/1.0.0/inventory/endpoint/$uuid"
-      verb "GET"
-      type "endpoint"
+    action "show"
+    
+    output "endpointuuid" do
+      body_path "datacenter[0].port[0].endpointuuid"
+    end
+    
+    output "datacenteruuid" do
+      body_path "datacenter[0].datacenteruuid"
+    end
 
-      field "uuid" do 
-        location "path"
-      end
+    output "datacenter" do
+      body_path "datacenter[]"
+    end
+
+    output "port" do
+      body_path "datacenter[0].port"
     end
   end
 end
