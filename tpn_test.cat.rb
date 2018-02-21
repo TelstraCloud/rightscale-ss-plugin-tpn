@@ -45,37 +45,19 @@ define gen_launch() return @tops, @my_top, @endpoints, $endpoints_str, $endpoint
   $customer_uuid = to_object(@tops)["details"][1]["customer_uuid"]
   call sys_log.detail("$customer_uuid: " + $customer_uuid)
   
-  #@endpoint = telstra_programmable_network.endpoint.show(uuid: "cfc3ff96-5557-4aa2-931b-8e6e11ba48d6")
-
+  # retrieve a specific endpoint
+  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "4e3c449f-b548-4bcc-8410-35ba2255a1af")
+  call is_vnf(@endpoint)
+  
   # get all the endpoints for this customer
   @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
-  $endpoints_str = to_json(to_object(@endpoints))
-  call sys_log.detail("$endpoints_str: " + $endpoints_str)
-  
-  
-  
-  # sub task_label: "retrieving all endpoints' ports", on_error: skip do
-  #   @port = @endpoints.port
-  # end
-  # call stop_debugging()
-  # $port_str = to_json(to_object(@port))
-  # call sys_log.detail("$port_str: " + $port_str)
+  call sys_log.detail("@endpoints: " + to_s(to_object(@endpoints)))
+  call list_endpoints(@endpoints)
+
+  ##### TODO clean up below ######
 
   # iterate through the endpoints and log the details
-  foreach @endpoint in @endpoints do
-    call start_debugging()
-    $endpoint_str = to_s(to_object(@endpoint))
-    call stop_debugging()
-    call sys_log.detail("$endpoint_str: " + $endpoint_str)
-  end
-  
-  # @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)  
-  # $endpoints_str = to_json(to_object(@endpoints))
 
-  # @endpoint = telstra_programmable_network.endpoint.show(uuid: "8f85450f-e5ca-4341-8406-6305abfc2ce5")
-  
-  # call stop_debugging()
-  # call start_debugging()
   # Don't iterate on the resources as this takes ages. Perhaps it is doing an
   # additional API call for each one?
   # $tops = to_object(@tops)
@@ -96,9 +78,43 @@ define gen_launch() return @tops, @my_top, @endpoints, $endpoints_str, $endpoint
   # call stop_debugging()
 end
 
-# define error_endpoint do
-#   $_error_behavior = "skip"
-# end
+# check if the given endpoint is a VNF
+define is_vnf(@endpoint) do
+  #call sys_log.detail("$endpoint_str: " + to_s(to_object(@endpoint)))
+  $port = to_object(@endpoint)["details"][0]["port"][0]
+  $endpointuuid = $port["endpointuuid"]
+  $vporttype = $port["vport"][0]["vporttype"]
+  
+  if $vporttype == "vnf"
+    call sys_log.detail("endpoint " + $endpointuuid + " is a VNF")
+  else
+    call sys_log.detail("endpoint " + $endpointuuid + " is not a VNF")
+  end
+
+end
+
+# loop through and log the details of all endpoints
+define list_endpoints(@endpoints) do
+  foreach @endpoint in @endpoints do
+    call start_debugging()
+    # we can't access some endpoints so need to catch the error caused by the
+    # 4xx response
+    sub on_error: error_endpoint(@endpoint) do
+      @target_endpoint = @endpoint.show()
+      $endpoint_str = to_s(to_object(@target_endpoint))
+      call sys_log.detail("$endpoint_str: " + $endpoint_str)      
+    end
+    call stop_debugging()
+  end
+end
+
+# some endpoints return 4xx responses so we need to catch that when looping
+# through all
+define error_endpoint(@endpoint) do
+  $endpoint_str = to_s(to_object(@endpoint))
+  call sys_log.detail("ERROR: $endpoint_str: " + $endpoint_str)
+  $_error_behavior = "skip"
+end
 
 define start_debugging() do
   if $$debugging == false || logic_and($$debugging != false, $$debugging != true)

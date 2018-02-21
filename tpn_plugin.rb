@@ -75,26 +75,24 @@ plugin "telstra_programmable_network" do
         location "path"
       end
 
-      # output "datacenteruuid", "endpointuuid"
-      output_path "endpointlist"
+      output_path "endpointlist[]"
     end
 
-    action "show"
-    
-    output "endpointuuid" do
-      body_path "datacenter[0].port[0].endpointuuid"
-    end
-    
-    output "datacenteruuid" do
-      body_path "datacenter[0].datacenteruuid"
+    action "show" do
+      verb "GET"
+      path "/1.0.0/inventory/endpoint/$endpointuuid" # "$href"
+
+      field "endpointuuid" do 
+        location "path"
+      end
+
+      output_path "datacenter[]"
     end
 
-    output "datacenter" do
-      body_path "datacenter[]"
-    end
+    output "endpointuuid", "datacenteruuid"
 
     output "port" do
-      body_path "datacenter[0].port"
+      type "array"
     end
   end
 end
