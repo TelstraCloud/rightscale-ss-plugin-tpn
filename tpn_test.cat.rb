@@ -86,7 +86,7 @@ define is_vnf(@endpoint) do
   $vporttype = $port["vport"][0]["vporttype"]
   
   if $vporttype == "vnf"
-    call sys_log.detail("endpoint " + $endpointuuid + " is a VNF")
+    call sys_log.detail("endpoint " + $endpointuuid + " is a VNF!")
   else
     call sys_log.detail("endpoint " + $endpointuuid + " is not a VNF")
   end
