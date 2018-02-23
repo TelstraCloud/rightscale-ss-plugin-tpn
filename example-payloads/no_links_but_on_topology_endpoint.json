@@ -1,0 +1,31 @@
+/1.0.0/inventory/endpoint/b8190e24-42af-4934-ae2a-619e3594d1d7
+{
+    "datacenter": [
+        {
+            "datacenteruuid": "2c030d21-ccbf-11e5-b670-000c293805b1",
+            "port": [
+                {
+                    "endpointuuid": "b8190e24-42af-4934-ae2a-619e3594d1d7",
+                    "interfacespeed": "10000",
+                    "portnumber": "3",
+                    "vnf_status": "deployed",
+                    "vport": [
+                        {
+                            "interfacesequence": 0,
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf",
+                            "vportuuid": "23d4b67a-a7a3-4b05-bb22-066e6d9f9492",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "69",
+                                    "mac": "fa:16:3e:8b:57:4b"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

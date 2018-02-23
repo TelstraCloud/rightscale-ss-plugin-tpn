@@ -1,0 +1,31 @@
+https://penapi.pacnetconnect.com/1.0.0/inventory/endpoint/a7fe9533-f7ea-4e81-b07d-3a152f0907bb
+{
+    "datacenter": [
+        {
+            "datacenteruuid": "2c030d21-ccbf-11e5-b670-000c293805b1",
+            "port": [
+                {
+                    "endpointuuid": "a7fe9533-f7ea-4e81-b07d-3a152f0907bb",
+                    "interfacespeed": "10000",
+                    "portnumber": "1",
+                    "vnf_status": "deployed",
+                    "vport": [
+                        {
+                            "interfacesequence": 0,
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf",
+                            "vportuuid": "d3c85d66-aac2-4dc1-acdf-44381d925d9e",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "58",
+                                    "mac": "fa:16:3e:ec:76:c0"
+                                }
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

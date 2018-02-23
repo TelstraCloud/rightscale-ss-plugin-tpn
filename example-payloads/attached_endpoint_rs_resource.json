@@ -1,0 +1,130 @@
+{
+    "type": "endpoint",
+    "hrefs": [
+        "/1.0.0/inventory/endpoint/4e3c449f-b548-4bcc-8410-35ba2255a1af"
+    ],
+    "details": [
+        {
+            "datacenteruuid": "2c030d21-ccbf-11e5-b670-000c293805b1",
+            "port": [
+                {
+                    "interfacespeed": "10000",
+                    "portnumber": "1",
+                    "vnf_status": "deployed",
+                    "vport": [
+                        {
+                            "status": "deployed",
+                            "vporttype": "vnf",
+                            "vportuuid": "eafba0ce-8330-4961-a07f-c645062ca354",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "43",
+                                    "mac": "fa:16:3e:ad:2b:b2"
+                                }
+                            },
+                            "interfacesequence": 0,
+                            "linkuuid": "f4efde3aa25bc428"
+                        },
+                        {
+                            "vportuuid": "13ebabb7-eb8d-4b9c-a00e-a2d29a6e2396",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "73",
+                                    "mac": "fa:16:3e:61:26:2e"
+                                }
+                            },
+                            "interfacesequence": 0,
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf"
+                        }
+                    ],
+                    "endpointuuid": "4e3c449f-b548-4bcc-8410-35ba2255a1af"
+                },
+                {
+                    "vnf_status": "deployed",
+                    "vport": [
+                        {
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf",
+                            "vportuuid": "72c0fc7f-66d1-4888-983f-317c03265dc0",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "44",
+                                    "mac": "fa:16:3e:cb:77:27"
+                                }
+                            },
+                            "interfacesequence": 0
+                        },
+                        {
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf",
+                            "vportuuid": "b8331741-91c2-4177-bc73-dfb53ff95165",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "55",
+                                    "mac": "fa:16:3e:52:4c:cd"
+                                }
+                            },
+                            "interfacesequence": 0
+                        },
+                        {
+                            "vportuuid": "b2b7bec7-acca-45bd-8831-73e311838cf9",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "74",
+                                    "mac": "fa:16:3e:e1:d5:a5"
+                                }
+                            },
+                            "interfacesequence": 0,
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf"
+                        },
+                        {
+                            "interfacesequence": 0,
+                            "linkuuid": "",
+                            "status": "deployed",
+                            "vporttype": "vnf",
+                            "vportuuid": "2b8466ab-1721-4617-bbda-eb81bb35e224",
+                            "vportvalue": {
+                                "vlan": {
+                                    "id": "68",
+                                    "mac": "fa:16:3e:91:df:e6"
+                                }
+                            }
+                        }
+                    ],
+                    "endpointuuid": "4e3c449f-b548-4bcc-8410-35ba2255a1af",
+                    "interfacespeed": "10000",
+                    "portnumber": "2"
+                },
+                {
+                    "endpointuuid": "4e3c449f-b548-4bcc-8410-35ba2255a1af",
+                    "interfacespeed": "0",
+                    "portnumber": "",
+                    "vnf_status": "deployed",
+                    "vport": [
+                        {
+                            "vportvalue": {
+                                "vlan": {
+                                    "mac": "00:00:00:00:07"
+                                }
+                            },
+                            "linkuuid": "",
+                            "status": "new",
+                            "vporttype": "vnf",
+                            "vportuuid": "11fb20ac-4682-4116-8a89-2dae4da2838a"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "namespace": "telstra_programmable_network",
+    "dependents": [
+        []
+    ]
+}
