@@ -39,20 +39,34 @@ define gen_launch() return @tops, @my_top, @endpoints, $endpoints_str, $endpoint
   # $tops_str = to_json(to_object(@tops))
   
   #call sys_log.detail("@tops: " + to_json(to_object(@tops)))
+  call start_debugging()
+  @top = telstra_programmable_network.topology.show("uuid": "eee39575-1b2a-4dab-9732-200ac8a6f86c")
+  call stop_debugging()
+  call sys_log.detail("@top: " + to_s(to_object(@top)))
+  call start_debugging()
+  @top_objects = @top.objects()
+  call stop_debugging()
+  call sys_log.detail("@top.objects(): " + to_s(to_object(@top_objects)))
+
+  #@top_objects = @top.objects()
+  # @topology_objects = telstra_programmable_network.topology_objects.show("uuid": "eee39575-1b2a-4dab-9732-200ac8a6f86c")
+  # call stop_debugging()
+  #@top_objects = telstra_programmable_network.topology.objects("uuid": "eee39575-1b2a-4dab-9732-200ac8a6f86c")
+  # call sys_log.detail("@top_objects: " + to_s(to_object(@top_objects)))
 
   # get the customer uuid
-  @tops = telstra_programmable_network.topology.list()
-  $customer_uuid = to_object(@tops)["details"][1]["customer_uuid"]
-  call sys_log.detail("$customer_uuid: " + $customer_uuid)
+  # @tops = telstra_programmable_network.topology.list()
+  # $customer_uuid = to_object(@tops)["details"][1]["customer_uuid"]
+  # call sys_log.detail("$customer_uuid: " + $customer_uuid)
   
   # retrieve a specific endpoint
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "4e3c449f-b548-4bcc-8410-35ba2255a1af")
-  call is_vnf(@endpoint)
+  # @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "4e3c449f-b548-4bcc-8410-35ba2255a1af")
+  # call is_vnf(@endpoint)
   
   # get all the endpoints for this customer
-  @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
-  call sys_log.detail("@endpoints: " + to_s(to_object(@endpoints)))
-  call list_endpoints(@endpoints)
+  # @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
+  # call sys_log.detail("@endpoints: " + to_s(to_object(@endpoints)))
+  # call list_endpoints(@endpoints)
 
   ##### TODO clean up below ######
 

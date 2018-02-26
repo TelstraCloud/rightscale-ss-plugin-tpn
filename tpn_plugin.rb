@@ -53,11 +53,35 @@ plugin "telstra_programmable_network" do
       end
     end
 
+    link "objects" do
+      path "$href/objects"
+      type "topology_objects"
+    end
+
     action "destroy" do
       path "/ttms/1.0.0/topology_tag/$uuid"
     end
 
     output "uuid","name","description","status","customer_uuid","nsd_uuid","gui_topology","created_by","creation_date","deletion_date"
+  end
+
+  type "topology_objects" do
+    href_templates "/ttms/1.0.0/topology_tag/{{topology_tag}}/objects"
+
+    provision "no_operation"
+    delete "no_operation"
+
+    action "show" do
+      path "/ttms/1.0.0/topology_tag/$uuid/objects"
+      verb "GET"
+      type "topology"
+
+      field "uuid" do 
+        location "path"
+      end
+    end
+
+    output "endpoints", "links", "sharedvports", "topology_tag"
   end
 
   type "endpoint" do
