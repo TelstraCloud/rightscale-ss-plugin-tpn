@@ -73,7 +73,7 @@ define gen_launch() do
 end
 
 define unit_tests() do
-  @topologies = telstra_programmable_network.topology.list()
+  call build_topologies_cache() retrieve @topologies, $all_topology_objects
 
   #####################
   # is_vnf test cases #
@@ -96,7 +96,7 @@ define unit_tests() do
   # Unattached VNF Endpoint: a7fe9533-f7ea-4e81-b07d-3a152f0907bb
   @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "a7fe9533-f7ea-4e81-b07d-3a152f0907bb")
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
-  call is_unattached(@topologies, @endpoint) retrieve $is_unattached
+  call is_unattached(@topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
   call sys_log.detail("Endpoint " + $endpoint_uuid + " is_unattached returned " + to_s($is_unattached))
   assert $is_unattached
 end
@@ -113,7 +113,7 @@ define check_for_unattached_endpoints(@endpoints) do
       # $endpoint_str = to_s(to_object(@target_endpoint))
       # call sys_log.detail("$endpoint_str: " + $endpoint_str)
       
-      call is_unattached(@target_endpoint) retrieve $is_unattached
+      call is_unattached(@topologies, $all_topology_objects, @target_endpoint) retrieve $is_unattached
       if $is_unattached
         # add to email report
         # optionally remove the endpoint
@@ -124,13 +124,13 @@ define check_for_unattached_endpoints(@endpoints) do
   end
 end
 
-define is_unattached(@topologies, @endpoint) return $is_unattached do
+define is_unattached(@topologies, $all_topology_objects, @endpoint) return $is_unattached do
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
   
   call is_vnf(@endpoint) retrieve $is_vnf
   call is_deployed(@endpoint) retrieve $is_deployed
   call no_vports_have_links(@endpoint) retrieve $no_vports_have_links
-  call on_any_topologies(@topologies, @endpoint) retrieve $on_any_topologies
+  call on_any_topologies(@topologies, $all_topology_objects, @endpoint) retrieve $on_any_topologies
 
   $is_unattached = false
   if $is_vnf && $is_deployed && $no_vports_have_links && logic_not($on_any_topologies)
@@ -163,14 +163,31 @@ define no_vports_have_links(@endpoint) return $no_vports_have_links do
   end
 end
 
-define on_any_topologies(@topologies, @endpoint) return $on_any_topologies do
-  # TODO need to build a cache of topology_objects
+# builds a cache of all the topology data so it doesn't need to be retrieved
+# for each endpoint that is checked
+define build_topologies_cache() return @topologies, $all_topology_objects do
+  call sys_log.detail("build_topologies_cache: Starting to retrieving all " +
+    "topologies and topology objects")
+  @topologies = telstra_programmable_network.topology.list()
+  #@topologies = @topologies[0..5]
+  $all_topology_objects = {}
+  foreach @topology in @topologies do
+    @topology_objects = @topology.objects()
+    $all_topology_objects[@topology.uuid] = to_object(@topology_objects)
+  end
+  call sys_log.detail("build_topologies_cache: Completed retrieving " +
+    to_s(size(@topologies)) + " topologies and " +
+    to_s(size($all_topology_objects)) + " topology objects")
+end
+
+# returns true if @endpoint is used on any topologies
+# @topologies, $all_topology_objects are the cached topology data data 
+define on_any_topologies(@topologies, $all_topology_objects, @endpoint) return $on_any_topologies do
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
   
   $on_any_topologies = false
   foreach @topology in @topologies do
-    @topology_objects = @topology.objects()
-    call sys_log.detail("@topology_objects: " + to_s(to_object(@topology_objects)))
+    @topology_objects = $all_topology_objects[@topology.uuid]
     foreach $target_endpoint in @topology_objects.endpoints do
       $target_endpoint_uuid = $target_endpoint["endpoint_uuid"]
       call sys_log.detail("$endpoint_uuid: " + $endpoint_uuid + " @topology: " + @topology.uuid + " $target_endpoint_uuid: " + $target_endpoint_uuid)
