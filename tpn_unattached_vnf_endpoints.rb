@@ -27,6 +27,8 @@ operation "launch" do
 end
 
 define gen_launch() do
+  # used to collect errors such as endpoints that cannot be read
+  $$errors = []
   #$deployment_str = @@deployment.description
   #call start_debugging()
   # $tops_str = to_json(to_object(@tops))
@@ -73,47 +75,63 @@ define gen_launch() do
 end
 
 define unit_tests() do
+  # sub task_name: "build_topologies_cache" do
   call build_topologies_cache() retrieve $topologies, $all_topology_objects
+  # end
 
-  #####################
-  # is_vnf test cases #
-  #####################
+  # #####################
+  # # is_vnf test cases #
+  # #####################
 
-  # Non-vnf endpoint: cfc3ff96-5557-4aa2-931b-8e6e11ba48d6
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "cfc3ff96-5557-4aa2-931b-8e6e11ba48d6")
-  call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
-  call is_vnf(@endpoint) retrieve $is_vnf
-  call sys_log.detail("Endpoint " + $endpoint_uuid + " is NOT a VNF. is_vnf returned " + to_s($is_vnf))
-  assert logic_not($is_vnf)
+  # # Non-vnf endpoint: cfc3ff96-5557-4aa2-931b-8e6e11ba48d6
+  # @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "cfc3ff96-5557-4aa2-931b-8e6e11ba48d6")
+  # call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
+  # call is_vnf(@endpoint) retrieve $is_vnf
+  # call sys_log.detail("Endpoint " + $endpoint_uuid + " is NOT a VNF. is_vnf returned " + to_s($is_vnf))
+  # assert logic_not($is_vnf)
 
-  # VNF Endpoint: b8190e24-42af-4934-ae2a-619e3594d1d7
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
-  call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
-  call is_vnf(@endpoint) retrieve $is_vnf
-  call sys_log.detail("Endpoint " + $endpoint_uuid + " is a VNF. is_vnf returned " + to_s($is_vnf))
-  assert $is_vnf
+  # # VNF Endpoint: b8190e24-42af-4934-ae2a-619e3594d1d7
+  # @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  # call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
+  # call is_vnf(@endpoint) retrieve $is_vnf
+  # call sys_log.detail("Endpoint " + $endpoint_uuid + " is a VNF. is_vnf returned " + to_s($is_vnf))
+  # assert $is_vnf
 
-  #########################
-  # unattached test cases #
-  #########################
+  # #########################
+  # # unattached test cases #
+  # #########################
 
-  # Unattached VNF Endpoint: a7fe9533-f7ea-4e81-b07d-3a152f0907bb
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "a7fe9533-f7ea-4e81-b07d-3a152f0907bb")
-  call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
-  call is_unattached($topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
-  call sys_log.detail("Endpoint " + $endpoint_uuid + " is unattached. is_unattached returned " + to_s($is_unattached))
-  assert $is_unattached
+  # # Unattached VNF Endpoint: a7fe9533-f7ea-4e81-b07d-3a152f0907bb
+  # @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "a7fe9533-f7ea-4e81-b07d-3a152f0907bb")
+  # call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
+  # call is_unattached($topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
+  # call sys_log.detail("Endpoint " + $endpoint_uuid + " is unattached. is_unattached returned " + to_s($is_unattached))
+  # assert $is_unattached
 
-  # Attached VNF Endpoint: b8190e24-42af-4934-ae2a-619e3594d1d7
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
-  call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
-  call is_unattached($topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
-  call sys_log.detail("Endpoint " + $endpoint_uuid + " is attached. is_unattached returned " + to_s($is_unattached))
-  assert logic_not($is_unattached)
+  # # Attached VNF Endpoint: b8190e24-42af-4934-ae2a-619e3594d1d7
+  # @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  # call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
+  # call is_unattached($topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
+  # call sys_log.detail("Endpoint " + $endpoint_uuid + " is attached. is_unattached returned " + to_s($is_unattached))
+  # assert logic_not($is_unattached)
+
+  #############################################
+  # check_for_unattached_endpoints test cases #
+  #############################################
+
+  # sub task_name: "check_for_unattached_endpoints" do
+  call check_for_unattached_endpoints($topologies, $all_topology_objects)
+  # end
 end
 
 # loop through and log the details of all endpoints
-define check_for_unattached_endpoints(@endpoints) do
+define check_for_unattached_endpoints($topologies, $all_topology_objects) do
+  # get the customer uuid
+  $customer_uuid = $topologies["details"][0]["customer_uuid"]
+
+  call sys_log.detail("$customer_uuid: " + $customer_uuid)
+  @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
+  
   call sys_log.detail("check_for_unattached_endpoints: Checking " +
     to_s(size(@endpoints)) + " endpoints for unattached VNFs")
 
@@ -130,7 +148,7 @@ define check_for_unattached_endpoints(@endpoints) do
         # optionally remove the endpoint
         call sys_log.detail("check_for_unattached_endpoints: Endpoint " +
           $endpointuuid + " is an unattached VNF")
-          $unattached_endpoints << to_object(@endpoint)
+          $unattached_endpoints << to_object(@target_endpoint)
       end
     end
   end
@@ -138,6 +156,8 @@ define check_for_unattached_endpoints(@endpoints) do
   call sys_log.detail("check_for_unattached_endpoints: Completed checking " +
     to_s(size(@endpoints)) + " endpoints. " + to_s(size($unattached_endpoints)) +
     " were unattached VNFs")
+  call sys_log.detail("check_for_unattached_endpoints: $unattached_endpoints " +
+    to_s($unattached_endpoints))
 
 end
 
@@ -193,7 +213,7 @@ define build_topologies_cache() return $topologies, $all_topology_objects do
     " topology objects")
 
   # the following line is useful for testing as it avoids caching all topologies
-  # @topologies = @topologies[0..4]
+  # @topologies = @topologies[0..1]
   $topologies = to_object(@topologies)
   $all_topology_objects = {}
   foreach $topology in $topologies["details"] do
@@ -235,7 +255,7 @@ end
 # through all
 define error_endpoint(@endpoint) do
   $endpoint_str = to_s(to_object(@endpoint))
-  call sys_log.detail("ERROR: $endpoint_str: " + $endpoint_str)
+  $$errors << "ERROR: $endpoint_str: " + $endpoint_str
   $_error_behavior = "skip"
 end
 
