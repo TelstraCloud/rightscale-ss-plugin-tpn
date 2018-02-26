@@ -133,7 +133,7 @@ define is_unattached(@topologies, @endpoint) return $is_unattached do
   call on_any_topologies(@topologies, @endpoint) retrieve $on_any_topologies
 
   $is_unattached = false
-  if $is_vnf && $is_deployed && $no_vports_have_links
+  if $is_vnf && $is_deployed && $no_vports_have_links && logic_not($on_any_topologies)
     $is_unattached = true
   end
 end
@@ -164,11 +164,21 @@ define no_vports_have_links(@endpoint) return $no_vports_have_links do
 end
 
 define on_any_topologies(@topologies, @endpoint) return $on_any_topologies do
-  # TODO call https://penapi.pacnetconnect.com/ttms/1.0.0/topology_tag/${taguuid}/objects
+  # TODO need to build a cache of topology_objects
+  call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
+  
   $on_any_topologies = false
-  for @topology in @topologies
-    if to_object(@topology)["details"]
-    $on_any_topologies = true
+  foreach @topology in @topologies do
+    @topology_objects = @topology.objects()
+    call sys_log.detail("@topology_objects: " + to_s(to_object(@topology_objects)))
+    foreach $target_endpoint in @topology_objects.endpoints do
+      $target_endpoint_uuid = $target_endpoint["endpoint_uuid"]
+      call sys_log.detail("$endpoint_uuid: " + $endpoint_uuid + " @topology: " + @topology.uuid + " $target_endpoint_uuid: " + $target_endpoint_uuid)
+      if $endpoint_uuid == $target_endpoint_uuid
+        $on_any_topologies = true
+        # TODO should break out of the loop here
+      end
+    end
   end
 end
 
