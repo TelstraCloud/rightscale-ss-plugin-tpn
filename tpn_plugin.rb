@@ -74,7 +74,7 @@ plugin "telstra_programmable_network" do
     action "show" do
       path "/ttms/1.0.0/topology_tag/$uuid/objects"
       verb "GET"
-      type "topology"
+      type "topology_objects"
 
       field "uuid" do 
         location "path"
