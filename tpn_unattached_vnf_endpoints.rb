@@ -110,7 +110,7 @@ define check_for_unattached_endpoints($topologies, $all_topology_objects) do
         # optionally remove the endpoint
         call sys_log.detail("check_for_unattached_endpoints: Endpoint " +
           $endpointuuid + " is an unattached VNF")
-          $unattached_endpoints << to_object(@target_endpoint)
+        $unattached_endpoints << to_object(@target_endpoint)
       end
     end
   end
@@ -118,8 +118,6 @@ define check_for_unattached_endpoints($topologies, $all_topology_objects) do
   call sys_log.detail("check_for_unattached_endpoints: Completed checking " +
     to_s(size(@endpoints)) + " endpoints. " + to_s(size($unattached_endpoints)) +
     " were unattached VNFs")
-  call sys_log.detail("check_for_unattached_endpoints: $unattached_endpoints " +
-    to_s($unattached_endpoints))
 
 end
 
