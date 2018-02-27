@@ -23,10 +23,10 @@ end
 
 operation "launch" do
   label "Launch"
-  definition "gen_launch"
+  definition "launch"
 end
 
-define gen_launch() do
+define launch() do
   # used to collect errors such as endpoints that cannot be read
   $$errors = []
   
