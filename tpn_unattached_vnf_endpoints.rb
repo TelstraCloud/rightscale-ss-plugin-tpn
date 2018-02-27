@@ -10,6 +10,7 @@ import "plugins/telstra_programmable_network"
 parameter "param_email" do
   category "Contact"
   label "Email addresses (separate with commas)"
+  default "david.sackett@team.telstra.com"
   type "string"
 end
 
@@ -35,8 +36,21 @@ define launch() do
 
   call build_topologies_cache() retrieve $topologies, $all_topology_objects
 
-  call check_for_unattached_endpoints($topologies, $all_topology_objects)
-  
+  call check_for_unattached_endpoints($topologies, $all_topology_objects) retrieve $unattached_endpoints
+
+  # $unattached_endpoints = []
+  # @target_endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  # $unattached_endpoints << to_object(@target_endpoint)
+
+  # send email report if there are any unattached endpoints found
+  if size($unattached_endpoints) > 0
+    call sys_log.detail("Building email report")
+    call build_email($param_action, $unattached_endpoints) retrieve $email_body
+    call sys_log.detail("Sending email report")
+    $param_email = "david.sackett@team.telstra.com"
+    call send_email_mailgun($param_email, $email_body)
+  end
+
   # log any endpoints that the script was not authorized to view
   call sys_log.detail("ERRORS: " + to_s($$errors))
 end
@@ -87,11 +101,9 @@ define unit_tests() do
 end
 
 # loop through and log the details of all endpoints
-define check_for_unattached_endpoints($topologies, $all_topology_objects) do
-  # get the customer uuid
+define check_for_unattached_endpoints($topologies, $all_topology_objects) return $unattached_endpoints do
+  # get the customer uuid and then the account's endpoints
   $customer_uuid = $topologies["details"][0]["customer_uuid"]
-
-  call sys_log.detail("$customer_uuid: " + $customer_uuid)
   @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
   
   call sys_log.detail("check_for_unattached_endpoints: Checking " +
@@ -118,7 +130,6 @@ define check_for_unattached_endpoints($topologies, $all_topology_objects) do
   call sys_log.detail("check_for_unattached_endpoints: Completed checking " +
     to_s(size(@endpoints)) + " endpoints. " + to_s(size($unattached_endpoints)) +
     " were unattached VNFs")
-
 end
 
 # returns true if the given @endpoint is an unattached VNF
@@ -214,9 +225,119 @@ end
 # some endpoints return 4xx responses so we need to catch that when looping
 # through all
 define error_endpoint(@endpoint) do
-  endpoint_uuid(@endpoint) retrieve $endpointuuid
-  $$errors << "ERROR: Can't access Endpoint: " + $endpointuuid
+  $$errors << ("ERROR: Can't process Endpoint: " + to_s(to_object(@endpoint)))
   $_error_behavior = "skip"
+end
+
+################################
+# Email generation and sending #
+################################
+
+define build_email($param_action, $unattached_endpoints) return $email_body do
+  #get account id to include in the email.
+  call find_account_name() retrieve $account_name
+  
+  if $param_action == "Alert and Delete"
+    $email_msg = "RightScale discovered the following unattached VNFs in " + 
+      $account_name + ". Per the policy set by your organization, these " +
+      "VNFs have been deleted and are no longer accessible (delete not " +
+      "implemented yet!)."
+  else
+    $email_msg = "RightScale discovered the following unattached VNFs in " +
+      $account_name + ". These VNFs are incurring charges and should " +
+      "be deleted if they are no longer being used."
+  end
+
+  $header = "\<\!DOCTYPE html PUBLIC \"-\/\/W3C\/\/DTD XHTML 1.0 Transitional\/\/EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"\>
+  <html xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\">
+      <head>
+          <meta http-equiv=%22Content-Type%22 content=%22text/html; charset=UTF-8%22 />
+<img src=%22https://assets.rightscale.com/6d1cee0ec0ca7140cd8701ef7e7dceb18a91ba20/web/images/logo.png%22 alt=%22RightScale Logo%22 width=%22200px%22 />
+</a>
+          <style></style>
+      </head>
+      <body>
+        <table border=%220%22 cellpadding=%220%22 cellspacing=%220%22 height=%22100%%22 width=%22100%%22 id=%22bodyTable%22>
+            <tr>
+                <td align=%22left%22 valign=%22top%22>
+                    <table border=%220%22 cellpadding=%2220%22 cellspacing=%220%22 width=%22100%%22 id=%22emailContainer%22>
+                        <tr>
+                            <td align=%22left%22 valign=%22top%22>
+                                <table border=%220%22 cellpadding=%2220%22 cellspacing=%220%22 width=%22100%%22 id=%22emailHeader%22>
+                                    <tr>
+                                        <td align=%22left%22 valign=%22top%22>
+                                           " + $email_msg + "
+                                        </td>
+
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td align=%22left%22 valign=%22top%22>
+                                <table border=%220%22 cellpadding=%2210%22 cellspacing=%220%22 width=%22100%%22 id=%22emailBody%22>
+                                    <tr>
+                                        <td align=%22left%22 valign=%22top%22>
+                                            Endpoint UUID
+                                        </td>
+                                    </tr>
+                                    "
+    $list_of_endpoints = ""
+    $table_start = "<td align=%22left%22 valign=%22top%22>"
+    $table_end = "</td>"
+
+    foreach $endpoint in $unattached_endpoints do
+      $endpointuuid = $endpoint["details"][0]["port"][0]['endpointuuid']
+      $endpoint_row = "<tr>" + $table_start + $endpointuuid + $table_end + "</tr>"
+      insert($list_of_endpoints, -1, $endpoint_row)
+    end
+
+    $footer="</tr>
+    </table>
+</td>
+</tr>
+<tr>
+<td align=%22left%22 valign=%22top%22>
+    <table border=%220%22 cellpadding=%2220%22 cellspacing=%220%22 width=%22100%%22 id=%22emailFooter%22>
+        <tr>
+            <td align=%22left%22 valign=%22top%22>
+                This report was automatically generated by a policy template TPN Unattached VNFs Policy your organization has defined in RightScale.
+            </td>
+        </tr>
+    </table>
+</td>
+</tr>
+</table>
+</td>
+</tr>
+</table>
+</body>
+</html>
+"
+    $email_body = $header + $list_of_endpoints + $footer
+end
+
+
+define send_email_mailgun($to, $email_body) do
+  $mailgun_endpoint = "http://smtp.services.rightscale.com/v3/services.rightscale.com/messages"
+  call find_account_name() retrieve $account_name
+
+   $to = gsub($to,"@","%40")
+   $post_body="from=policy-cat%40services.rightscale.com&to=" + $to + "&subject=[" + $account_name + "] Volume+Policy+Report&html=" + $email_body
+
+  $response = http_post(
+     url: $mailgun_endpoint,
+     headers: { "content-type": "application/x-www-form-urlencoded"},
+     body: $post_body
+    )
+end
+
+# Returns the RightScale account number in which the CAT was launched.
+define find_account_name() return $account_name do
+  $session_info = rs_cm.sessions.get(view: "whoami")
+  $acct_link = select($session_info[0]["links"], {rel: "account"})
+  $acct_href = $acct_link[0]["href"]
+  $account_name = rs_cm.get(href: $acct_href).name
 end
 
 # debugging tools
