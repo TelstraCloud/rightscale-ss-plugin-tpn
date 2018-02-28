@@ -247,14 +247,12 @@ define update_access_token() do
     url: "https://penapi.pacnetconnect.com/1.0.0/auth/generatetoken", 
     body: $body)
   call stop_debugging()
-  call sys_log.detail("$response: " + to_s($response))
   if $response['code'] != 200
     raise 'Error Authenticating'
   end
   # response does not contain the content-type header with applicatin/json so
   # we need to manually decode it.
   $access_token = from_json($response['body'])['access_token']
-  call sys_log.detail("$access_token: " + to_s($access_token))
   @access_token = rs_cm.credentials.get(filter: ["name==TPN_ACCESS_TOKEN"])
   @access_token.update(credential: {"value" : $access_token})
 end
