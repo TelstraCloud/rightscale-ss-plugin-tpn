@@ -12,17 +12,23 @@ managed via RightScale. It contains:
 
 # Installation
 1. Install dependencies.
-1. Edit `tpn_plugin.rb` and replace `<TPN Account ID>` with your Account/Domain ID
 1. Upload `tpn_plugin.rb` and `tpn_example.cat.rb` to Self-Service.
 1. (Optional) Publish `tpn_example.cat.rb` to the Catalog.
-1. Create a Credential in Cloud Management called `TPN_ACCESS_TOKEN`. Generate the access_token value using the TPN API (See https://dev.telstra.com/content/getting-started-tpn).
+1. Create the following Credentials in Cloud Management:
+  - store the username in `TPN_USERNAME`
+  - store the password in `TPN_PASSWORD`
+  - store the domain id in `TPN_DOMAIN_ID`
+  **Note**: the login function will store the access token in `TPN_ACCESS_TOKEN`
 
 # Usage
 1. Launch the `TPN Topology` CloudApp from the Self Service Designer or Catalog.
 1. Provide a name for the cloud app and click Launch.
-1. A Topology will be provisioned in TPN with the same name as provided. The Topology's UUID and Status will be displayed as outputs.
+1. A Topology will be provisioned in TPN with the same name as provided. The
+   Topology's UUID and Status will be displayed as outputs.
 1. Click Terminte to deprovision the Topology
 
 # Limitations
-1. Currently only Topologies are supported.
-1. The `access_token` needs to be updated quite frequently
+1. Currently only Topologies (List, Read, Delete, Read Objects) and Endpoints
+   (List, Read) are supported.
+1. If the CAT takes longer the ~1h 40mins the access token will expire and
+   script will fail

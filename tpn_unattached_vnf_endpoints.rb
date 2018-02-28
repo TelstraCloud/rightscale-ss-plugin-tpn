@@ -27,7 +27,9 @@ operation "launch" do
   definition "launch"
 end
 
-define launch() do
+define launch($param_email, $param_action) do
+  # login and get the access token
+  call update_access_token()
   # used to collect errors such as endpoints that cannot be read
   $$errors = []
   
@@ -227,6 +229,34 @@ end
 define error_endpoint(@endpoint) do
   $$errors << ("ERROR: Can't process Endpoint: " + to_s(to_object(@endpoint)))
   $_error_behavior = "skip"
+end
+
+# Login to TPN and update access token
+# store the username in the credential called TPN_USERNAME
+# store the password in the credential called TPN_PASSWORD
+# store the domain id in the credential called TPN_DOMAIN_ID
+# the login function will store the access token in TPN_ACCESS_TOKEN (which must exist)
+define update_access_token() do
+  $username = cred("TPN_USERNAME")
+  $password = cred("TPN_PASSWORD")
+  $domain_id = cred("TPN_DOMAIN_ID")
+  
+  $body = "grant_type=password&username=" + $domain_id + "%2f" + $username + "&password=" + $password
+  call start_debugging()
+  $response = http_post(headers: { "content-type": "application/x-www-form-urlencoded" },
+    url: "https://penapi.pacnetconnect.com/1.0.0/auth/generatetoken", 
+    body: $body)
+  call stop_debugging()
+  call sys_log.detail("$response: " + to_s($response))
+  if $response['code'] != 200
+    raise 'Error Authenticating'
+  end
+  # response does not contain the content-type header with applicatin/json so
+  # we need to manually decode it.
+  $access_token = from_json($response['body'])['access_token']
+  call sys_log.detail("$access_token: " + to_s($access_token))
+  @access_token = rs_cm.credentials.get(filter: ["name==TPN_ACCESS_TOKEN"])
+  @access_token.update(credential: {"value" : $access_token})
 end
 
 ################################
