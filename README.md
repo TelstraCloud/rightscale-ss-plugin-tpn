@@ -18,7 +18,7 @@ managed via RightScale. It contains:
   - store the username in `TPN_USERNAME`
   - store the password in `TPN_PASSWORD`
   - store the domain id in `TPN_DOMAIN_ID`
-  **Note**: the login function will store the access token in `TPN_ACCESS_TOKEN`
+  - used by the CATs to store the access token after login occurs in `TPN_ACCESS_TOKEN`
 
 # Usage
 1. Launch the `TPN Topology` CloudApp from the Self Service Designer or Catalog.

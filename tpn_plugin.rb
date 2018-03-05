@@ -10,17 +10,6 @@ plugin "telstra_programmable_network" do
   endpoint do
     default_host "https://penapi.pacnetconnect.com"
     default_scheme "https"
-    # login must be performed by the CAT template and access token stored in a
-    # credential called TPN_ACCESS_TOKEN 
-    headers do {
-      "Authorization": "Bearer " + cred("TPN_ACCESS_TOKEN")
-    } end
-  end
-
-  parameter "account_id" do
-    type "string"
-    label "Account ID"
-    description "The TPN account/domain ID"
   end
 
   type "topology" do
@@ -131,4 +120,11 @@ end
 
 resource_pool "telstra_programmable_network" do
   plugin $telstra_programmable_network
+
+  auth "tpn_auth", type: "api_key" do
+    key cred("TPN_ACCESS_TOKEN")
+    location "header"
+    field "Authorization"
+    type "Bearer"
+  end
 end

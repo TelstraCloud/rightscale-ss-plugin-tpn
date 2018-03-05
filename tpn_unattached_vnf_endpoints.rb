@@ -1,4 +1,4 @@
-name 'TPN Unattached Endpoints Policy'
+name 'TPN Unattached VNF Endpoints Policy'
 rs_ca_ver 20161221
 short_description "![TPN Logo](https://demostaticimages.blob.core.windows.net/icons/tpn_icon.png =85x64)\n
 Telstra Programmable Network Policy which looks for unattached VNF Endpoints. 
