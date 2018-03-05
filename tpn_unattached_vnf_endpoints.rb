@@ -30,6 +30,8 @@ end
 define launch($param_email, $param_action) do
   # login and get the access token
   call update_access_token()
+  # occasionally we get a race condition when using the access token fails
+  sleep(5)
   # used to collect errors such as endpoints that cannot be read
   $$errors = []
   
@@ -107,21 +109,24 @@ define check_for_unattached_endpoints($topologies, $all_topology_objects) return
   # get the customer uuid and then the account's endpoints
   $customer_uuid = $topologies["details"][0]["customer_uuid"]
   @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
-  
+  $endpoints = to_object(@endpoints)
+
   call sys_log.detail("check_for_unattached_endpoints: Checking " +
     to_s(size(@endpoints)) + " endpoints for unattached VNFs")
 
   $unattached_endpoints = []
-  foreach @endpoint in @endpoints do
+  call sys_log.detail("$endpoints: " + to_s($endpoints))
+
+  foreach $endpoint in $endpoints["details"] do
+    call sys_log.detail("$endpoint: " + to_s($endpoint))
+    
     # we can't access some endpoints so need to catch the error caused by the
     # 4xx response
-    sub on_error: error_endpoint(@endpoint) do
-      @target_endpoint = @endpoint.show(endpointuuid: @endpoint.uuid)
+    sub on_error: error_endpoint($endpoint) do
+      @target_endpoint = telstra_programmable_network.endpoint.show(endpointuuid: $endpoint["endpointuuid"])
       call endpoint_uuid(@target_endpoint) retrieve $endpointuuid
       call is_unattached($topologies, $all_topology_objects, @target_endpoint) retrieve $is_unattached
       if $is_unattached
-        # add to email report
-        # optionally remove the endpoint
         call sys_log.detail("check_for_unattached_endpoints: Endpoint " +
           $endpointuuid + " is an unattached VNF")
         $unattached_endpoints << to_object(@target_endpoint)
@@ -226,8 +231,8 @@ end
 
 # some endpoints return 4xx responses so we need to catch that when looping
 # through all
-define error_endpoint(@endpoint) do
-  $$errors << ("ERROR: Can't process Endpoint: " + to_s(to_object(@endpoint)))
+define error_endpoint($endpoint) do
+  $$errors << ("ERROR: Can't process Endpoint: " + to_s($endpoint))
   $_error_behavior = "skip"
 end
 
@@ -242,11 +247,10 @@ define update_access_token() do
   $domain_id = cred("TPN_DOMAIN_ID")
   
   $body = "grant_type=password&username=" + $domain_id + "%2f" + $username + "&password=" + $password
-  call start_debugging()
   $response = http_post(headers: { "content-type": "application/x-www-form-urlencoded" },
     url: "https://penapi.pacnetconnect.com/1.0.0/auth/generatetoken", 
     body: $body)
-  call stop_debugging()
+
   if $response['code'] != 200
     raise 'Error Authenticating'
   end

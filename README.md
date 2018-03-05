@@ -12,7 +12,7 @@ managed via RightScale. It contains:
 
 # Installation
 1. Install dependencies.
-1. Upload `tpn_plugin.rb` and `tpn_example.cat.rb` to Self-Service.
+1. Upload `tpn_plugin.rb`, `tpn_example.cat.rb` and `tpn_unattached_vnf_endpoints.rb` to Self-Service.
 1. (Optional) Publish `tpn_example.cat.rb` to the Catalog.
 1. Create the following Credentials in Cloud Management:
   - store the username in `TPN_USERNAME`
