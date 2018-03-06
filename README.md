@@ -27,6 +27,12 @@ managed via RightScale. It contains:
    Topology's UUID and Status will be displayed as outputs.
 1. Click Terminte to deprovision the Topology
 
+# Modifying the Email template
+The email template `email-template.html` can be directly viewed in a browser
+and modified as required. `escape-html.sh` should the be run to output a
+correctly escaped version. Each section of the template can then be copy and
+pasted into `tpn_unattached_vnf_endpoints.rb`.
+
 # Limitations
 1. Currently only Topologies (List, Read, Delete, Read Objects) and Endpoints
    (List, Read) are supported.

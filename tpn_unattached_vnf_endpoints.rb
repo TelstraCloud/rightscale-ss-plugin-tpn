@@ -362,7 +362,7 @@ define build_email($param_action, $unattached_endpoints) return $email_body do
       $endpointuuid = $endpoint["details"][0]["port"][0]['endpointuuid']
       $endpoint_row = "
   <div class=\"uuid\">
-" + $endpointuuid + "
+" + "    " + $endpointuuid + "
   </div>
 "
       insert($list_of_endpoints, -1, $endpoint_row)
