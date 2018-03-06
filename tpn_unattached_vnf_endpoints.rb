@@ -28,10 +28,11 @@ operation "launch" do
 end
 
 define launch($param_email, $param_action) do
-  # login and get the access token
-  call update_access_token()
+  # login and get the access token. This will only be used next time but it
+  #call update_access_token()
   # occasionally we get a race condition when using the access token fails
-  sleep(5)
+  #sleep(5)
+
   # used to collect errors such as endpoints that cannot be read
   $$errors = []
   
@@ -42,6 +43,7 @@ define launch($param_email, $param_action) do
 
   call check_for_unattached_endpoints($topologies, $all_topology_objects) retrieve $unattached_endpoints
 
+  # testing email template
   # $unattached_endpoints = []
   # @target_endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
   # $unattached_endpoints << to_object(@target_endpoint)
@@ -51,7 +53,6 @@ define launch($param_email, $param_action) do
     call sys_log.detail("Building email report")
     call build_email($param_action, $unattached_endpoints) retrieve $email_body
     call sys_log.detail("Sending email report")
-    $param_email = "david.sackett@team.telstra.com"
     call send_email_mailgun($param_email, $email_body)
   end
 
@@ -269,80 +270,111 @@ define build_email($param_action, $unattached_endpoints) return $email_body do
   #get account id to include in the email.
   call find_account_name() retrieve $account_name
   
-  if $param_action == "Alert and Delete"
-    $email_msg = "RightScale discovered the following unattached VNFs in " + 
-      $account_name + ". Per the policy set by your organization, these " +
-      "VNFs have been deleted and are no longer accessible (delete not " +
-      "implemented yet!)."
+  
+  $email_msg = "
+  <p>
+    Cloud Management Platform detected the following unattached Telstra
+    Programmable Network VNF Endpoints. These are monitored by the " +
+    $account_name + " CMP account.
+  </p>
+"
+  if $param_action == "Report and Delete"
+    $email_msg = $email_msg + "
+  <p>
+    These VNFs have been deleted and are no longer accessible (delete not
+    implemented yet!).
+  </p>
+"  
   else
-    $email_msg = "RightScale discovered the following unattached VNFs in " +
-      $account_name + ". These VNFs are incurring charges and should " +
-      "be deleted if they are no longer being used."
+    $email_msg = $email_msg + "
+  <p>
+    These VNFs are incurring charges and should be
+    deleted if they are no longer being used.
+  </p>
+"
+
   end
 
-  $header = "\<\!DOCTYPE html PUBLIC \"-\/\/W3C\/\/DTD XHTML 1.0 Transitional\/\/EN\" \"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\"\>
-  <html xmlns=\"http:\/\/www.w3.org\/1999\/xhtml\">
-      <head>
-          <meta http-equiv=%22Content-Type%22 content=%22text/html; charset=UTF-8%22 />
-<img src=%22https://assets.rightscale.com/6d1cee0ec0ca7140cd8701ef7e7dceb18a91ba20/web/images/logo.png%22 alt=%22RightScale Logo%22 width=%22200px%22 />
-</a>
-          <style></style>
-      </head>
-      <body>
-        <table border=%220%22 cellpadding=%220%22 cellspacing=%220%22 height=%22100%%22 width=%22100%%22 id=%22bodyTable%22>
-            <tr>
-                <td align=%22left%22 valign=%22top%22>
-                    <table border=%220%22 cellpadding=%2220%22 cellspacing=%220%22 width=%22100%%22 id=%22emailContainer%22>
-                        <tr>
-                            <td align=%22left%22 valign=%22top%22>
-                                <table border=%220%22 cellpadding=%2220%22 cellspacing=%220%22 width=%22100%%22 id=%22emailHeader%22>
-                                    <tr>
-                                        <td align=%22left%22 valign=%22top%22>
-                                           " + $email_msg + "
-                                        </td>
+  $header = "
+<!-- header -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />
+  <img src=\"https://demostaticimages.blob.core.windows.net/assets/telstra-email-header.png\" alt=\"Telstra Header\" width=\"100%\"
+  />
+  </a>
+  <style>
+    h1,
+    h2,
+    h3 {
+      margin-left: 10px;
+      margin-right: 10px;
+    }
 
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td align=%22left%22 valign=%22top%22>
-                                <table border=%220%22 cellpadding=%2210%22 cellspacing=%220%22 width=%22100%%22 id=%22emailBody%22>
-                                    <tr>
-                                        <td align=%22left%22 valign=%22top%22>
-                                            Endpoint UUID
-                                        </td>
-                                    </tr>
-                                    "
+    p {
+      margin-left: 20px;
+      margin-right: 20px;
+    }
+
+    footer {
+      margin-left: 10px;
+      margin-right: 10px;
+      font-style: italic;
+      font-size: smaller;
+    }
+
+    hr {
+      margin-top: 40px;
+      margin-left: 10px;
+      margin-right: 10px;
+    }
+
+    body {
+      margin: 0;
+      font-family: Akkurat, Arial, Helvectica, sans-serif;
+    }
+
+    .uuid {
+      margin-left: 10px;
+      margin-top: 5px;
+      margin-right: 10px;
+      text-align: center;
+      font-weight: bold;
+      font-family: monospace;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Unattached VNF Endpoints Report</h1>
+  <h2>Telstra Programmable Networks</h2>
+
+
+  <!-- $email_msg -->
+" + $email_msg + "
+
+  <h3>Endpoint UUIDs</h3>
+"
     $list_of_endpoints = ""
-    $table_start = "<td align=%22left%22 valign=%22top%22>"
-    $table_end = "</td>"
-
+    
     foreach $endpoint in $unattached_endpoints do
       $endpointuuid = $endpoint["details"][0]["port"][0]['endpointuuid']
-      $endpoint_row = "<tr>" + $table_start + $endpointuuid + $table_end + "</tr>"
+      $endpoint_row = "
+  <div class=\"uuid\">
+" + $endpointuuid + "
+  </div>
+"
       insert($list_of_endpoints, -1, $endpoint_row)
     end
 
-    $footer="</tr>
-    </table>
-</td>
-</tr>
-<tr>
-<td align=%22left%22 valign=%22top%22>
-    <table border=%220%22 cellpadding=%2220%22 cellspacing=%220%22 width=%22100%%22 id=%22emailFooter%22>
-        <tr>
-            <td align=%22left%22 valign=%22top%22>
-                This report was automatically generated by a policy template TPN Unattached VNFs Policy your organization has defined in RightScale.
-            </td>
-        </tr>
-    </table>
-</td>
-</tr>
-</table>
-</td>
-</tr>
-</table>
+    $footer="
+  <hr>
+  <footer>
+    This report was automatically generated by the \"TPN Unattached VNF
+    Endpoints\" Policy your organization has defined in RightScale.
+  </footer>
+
 </body>
 </html>
 "
@@ -354,8 +386,8 @@ define send_email_mailgun($to, $email_body) do
   $mailgun_endpoint = "http://smtp.services.rightscale.com/v3/services.rightscale.com/messages"
   call find_account_name() retrieve $account_name
 
-   $to = gsub($to,"@","%40")
-   $post_body="from=policy-cat%40services.rightscale.com&to=" + $to + "&subject=[" + $account_name + "] Volume+Policy+Report&html=" + $email_body
+  $to = gsub($to,"@","%40")
+  $post_body="from=policy-cat%40services.rightscale.com&to=" + $to + "&subject=[" + $account_name + "] TPN+Unattached+VNF+Endpoints+Policy+Report&html=" + $email_body
 
   $response = http_post(
      url: $mailgun_endpoint,
