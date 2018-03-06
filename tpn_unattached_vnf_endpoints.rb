@@ -296,12 +296,12 @@ define build_email($param_action, $unattached_endpoints) return $email_body do
   end
 
   $header = "
-<!-- header -->
 <!DOCTYPE html>
 <html>
 <head>
   <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />
-  <img src=\"https://demostaticimages.blob.core.windows.net/assets/telstra-email-header.png\" alt=\"Telstra Header\" width=\"100%\"
+  <img src=\"https://demostaticimages.blob.core.windows.net/assets/telstra-email-header.png\"
+    alt=\"Telstra Header\" width=\"600\" style=\"display:block;width:100%\"
   />
   </a>
   <style>
