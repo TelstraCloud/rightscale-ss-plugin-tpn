@@ -38,3 +38,4 @@ pasted into `tpn_unattached_vnf_endpoints.rb`.
    (List, Read) are supported.
 1. If the CAT takes longer the ~1h 40mins the access token will expire and
    script will fail
+1. Authentication is performed by the CAT rather than the SS Plugin
