@@ -20,6 +20,11 @@ plugin "telstra_programmable_network" do
       type "string"
     end
 
+    field "authorization" do
+      type "string"
+      location "header"
+    end
+
     field "description" do
       required true
       type "string"

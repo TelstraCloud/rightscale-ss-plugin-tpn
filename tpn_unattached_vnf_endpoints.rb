@@ -41,9 +41,6 @@ define launch($param_email, $param_action) do
   # call stop_debugging()
   # call sys_log.detail("@session: " + to_s(to_object(@session)))
 
-  # occasionally we get a race condition when using the access token fails
-  #sleep(5)
-
   # run automated tests
   # call unit_tests()
 
@@ -53,11 +50,7 @@ define launch($param_email, $param_action) do
 
   # testing email template
   # $unattached_endpoints = []
-  # call start_debugging()
-  # sub on_error: error_endpoint("error") do
   #   @target_endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
-  # end
-  # call stop_debugging()
   # $unattached_endpoints << to_object(@target_endpoint)
 
   # send email report if there are any unattached endpoints found
