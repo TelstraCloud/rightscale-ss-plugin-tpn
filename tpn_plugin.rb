@@ -29,18 +29,30 @@ plugin "telstra_programmable_network" do
       verb "POST"
       path "/ttms/1.0.0/topology_tag"
       type "topology"
+
+      field "authorization" do
+        location "header"
+      end
     end
 
     action "list" do 
       verb "GET"
       path "/ttms/1.0.0/topology_tag"
       type "topology"
+
+      field "authorization" do
+        location "header"
+      end
     end
 
     action "show" do
       path "/ttms/1.0.0/topology_tag/$uuid"
       verb "GET"
       type "topology"
+
+      field "authorization" do
+        location "header"
+      end
 
       field "uuid" do 
         location "path"
@@ -54,6 +66,10 @@ plugin "telstra_programmable_network" do
 
     action "destroy" do
       path "/ttms/1.0.0/topology_tag/$uuid"
+
+      field "authorization" do
+        location "header"
+      end
     end
 
     output "uuid","name","description","status","customer_uuid","nsd_uuid","gui_topology","created_by","creation_date","deletion_date"
@@ -69,6 +85,10 @@ plugin "telstra_programmable_network" do
       path "/ttms/1.0.0/topology_tag/$uuid/objects"
       verb "GET"
       type "topology_objects"
+
+      field "authorization" do
+        location "header"
+      end
 
       field "uuid" do 
         location "path"
@@ -89,6 +109,10 @@ plugin "telstra_programmable_network" do
       path "/1.0.0/inventory/endpoints/customeruuid/$customer_uuid"
       type "endpoint"
 
+      field "authorization" do
+        location "header"
+      end
+
       field "customer_uuid" do 
         location "path"
       end
@@ -99,6 +123,10 @@ plugin "telstra_programmable_network" do
     action "show" do
       verb "GET"
       path "/1.0.0/inventory/endpoint/$endpointuuid" # "$href"
+
+      field "authorization" do
+        location "header"
+      end
 
       field "endpointuuid" do 
         location "path"
@@ -113,6 +141,22 @@ plugin "telstra_programmable_network" do
       type "array"
     end
   end
+
+  # type "session" do
+  #   href_templates "{{access_token}}"
+
+  #   field "body" do
+  #     type "string"
+  #     location "body"
+  #   end
+
+  #   action "create" do 
+  #     verb "POST"
+  #     path "/1.0.0/auth/generatetoken"
+  #     type "session"
+  #   end
+  # end
+
 end
 
 define no_operation(@declaration) do
@@ -121,10 +165,10 @@ end
 resource_pool "telstra_programmable_network" do
   plugin $telstra_programmable_network
 
-  auth "tpn_auth", type: "api_key" do
-    key cred("TPN_ACCESS_TOKEN")
-    location "header"
-    field "Authorization"
-    type "Bearer"
-  end
+  # auth "tpn_auth", type: "api_key" do
+  #   key cred("TPN_ACCESS_TOKEN")
+  #   location "header"
+  #   field "Authorization"
+  #   type "Bearer"
+  # end
 end

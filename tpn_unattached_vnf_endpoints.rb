@@ -28,14 +28,22 @@ operation "launch" do
 end
 
 define launch($param_email, $param_action) do
-  # login and get the access token. This will only be used next time but it
-  #call update_access_token()
-  # occasionally we get a race condition when using the access token fails
-  #sleep(5)
-
   # used to collect errors such as endpoints that cannot be read
   $$errors = []
   
+  # login and get the access token. This will only be used next time but it
+  call update_access_token() retrieve $access_token
+  $$authorization = "Bearer " + $access_token
+  # call start_debugging()
+  # sub on_error: error_endpoint("error") do
+  #   @session = telstra_programmable_network.session.create(body: "grant_type=password&username=110417804064%2FDavid.Sackett.demo&password=kB7O%233v5")
+  # end
+  # call stop_debugging()
+  # call sys_log.detail("@session: " + to_s(to_object(@session)))
+
+  # occasionally we get a race condition when using the access token fails
+  #sleep(5)
+
   # run automated tests
   # call unit_tests()
 
@@ -45,7 +53,11 @@ define launch($param_email, $param_action) do
 
   # testing email template
   # $unattached_endpoints = []
-  # @target_endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  # call start_debugging()
+  # sub on_error: error_endpoint("error") do
+  #   @target_endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  # end
+  # call stop_debugging()
   # $unattached_endpoints << to_object(@target_endpoint)
 
   # send email report if there are any unattached endpoints found
@@ -67,14 +79,14 @@ define unit_tests() do
   #####################
 
   # Non-vnf endpoint: cfc3ff96-5557-4aa2-931b-8e6e11ba48d6
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "cfc3ff96-5557-4aa2-931b-8e6e11ba48d6")
+  @endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: "cfc3ff96-5557-4aa2-931b-8e6e11ba48d6")
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
   call is_vnf(@endpoint) retrieve $is_vnf
   call sys_log.detail("Endpoint " + $endpoint_uuid + " is NOT a VNF. is_vnf returned " + to_s($is_vnf))
   assert logic_not($is_vnf)
 
   # VNF Endpoint: b8190e24-42af-4934-ae2a-619e3594d1d7
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  @endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
   call is_vnf(@endpoint) retrieve $is_vnf
   call sys_log.detail("Endpoint " + $endpoint_uuid + " is a VNF. is_vnf returned " + to_s($is_vnf))
@@ -85,14 +97,14 @@ define unit_tests() do
   #########################
 
   # Unattached VNF Endpoint: a7fe9533-f7ea-4e81-b07d-3a152f0907bb
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "a7fe9533-f7ea-4e81-b07d-3a152f0907bb")
+  @endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: "a7fe9533-f7ea-4e81-b07d-3a152f0907bb")
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
   call is_unattached($topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
   call sys_log.detail("Endpoint " + $endpoint_uuid + " is unattached. is_unattached returned " + to_s($is_unattached))
   assert $is_unattached
 
   # Attached VNF Endpoint: b8190e24-42af-4934-ae2a-619e3594d1d7
-  @endpoint = telstra_programmable_network.endpoint.show(endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
+  @endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: "b8190e24-42af-4934-ae2a-619e3594d1d7")
   call endpoint_uuid(@endpoint) retrieve $endpoint_uuid
   call is_unattached($topologies, $all_topology_objects, @endpoint) retrieve $is_unattached
   call sys_log.detail("Endpoint " + $endpoint_uuid + " is attached. is_unattached returned " + to_s($is_unattached))
@@ -109,22 +121,21 @@ end
 define check_for_unattached_endpoints($topologies, $all_topology_objects) return $unattached_endpoints do
   # get the customer uuid and then the account's endpoints
   $customer_uuid = $topologies["details"][0]["customer_uuid"]
-  @endpoints = telstra_programmable_network.endpoint.list(customer_uuid: $customer_uuid)
+  @endpoints = telstra_programmable_network.endpoint.list(authorization: $$authorization, customer_uuid: $customer_uuid)
   $endpoints = to_object(@endpoints)
 
   call sys_log.detail("check_for_unattached_endpoints: Checking " +
     to_s(size(@endpoints)) + " endpoints for unattached VNFs")
 
   $unattached_endpoints = []
-  call sys_log.detail("$endpoints: " + to_s($endpoints))
-
+  
   foreach $endpoint in $endpoints["details"] do
     call sys_log.detail("$endpoint: " + to_s($endpoint))
     
     # we can't access some endpoints so need to catch the error caused by the
     # 4xx response
     sub on_error: error_endpoint($endpoint) do
-      @target_endpoint = telstra_programmable_network.endpoint.show(endpointuuid: $endpoint["endpointuuid"])
+      @target_endpoint = telstra_programmable_network.endpoint.show(authorization: $$authorization, endpointuuid: $endpoint["endpointuuid"])
       call endpoint_uuid(@target_endpoint) retrieve $endpointuuid
       call is_unattached($topologies, $all_topology_objects, @target_endpoint) retrieve $is_unattached
       if $is_unattached
@@ -185,7 +196,7 @@ end
 # builds a cache of all the topology data so it doesn't need to be retrieved
 # for each endpoint that is checked
 define build_topologies_cache() return $topologies, $all_topology_objects do
-  @topologies = telstra_programmable_network.topology.list()
+  @topologies = telstra_programmable_network.topology.list(authorization: $$authorization)
 
   call sys_log.detail("build_topologies_cache: Retrieved " + to_s(size(@topologies)) +
     " topologies. Starting to retrieve all " + to_s(size(@topologies)) +
@@ -197,7 +208,7 @@ define build_topologies_cache() return $topologies, $all_topology_objects do
   $all_topology_objects = {}
   foreach $topology in $topologies["details"] do
     $topology_uuid = $topology["uuid"]
-    @topology_objects = telstra_programmable_network.topology_objects.show("uuid": $topology_uuid)
+    @topology_objects = telstra_programmable_network.topology_objects.show(authorization: $$authorization, "uuid": $topology_uuid)
     $all_topology_objects[$topology_uuid] = to_object(@topology_objects)
   end
 
@@ -242,7 +253,7 @@ end
 # store the password in the credential called TPN_PASSWORD
 # store the domain id in the credential called TPN_DOMAIN_ID
 # the login function will store the access token in TPN_ACCESS_TOKEN (which must exist)
-define update_access_token() do
+define update_access_token() return $access_token do
   $username = cred("TPN_USERNAME")
   $password = cred("TPN_PASSWORD")
   $domain_id = cred("TPN_DOMAIN_ID")
