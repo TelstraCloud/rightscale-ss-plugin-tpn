@@ -34,13 +34,7 @@ define launch($param_email, $param_action) do
   # login and get the access token. This will only be used next time but it
   call update_access_token() retrieve $access_token
   $$authorization = "Bearer " + $access_token
-  # call start_debugging()
-  # sub on_error: error_endpoint("error") do
-  #   @session = telstra_programmable_network.session.create(body: "grant_type=password&username=110417804064%2FDavid.Sackett.demo&password=kB7O%233v5")
-  # end
-  # call stop_debugging()
-  # call sys_log.detail("@session: " + to_s(to_object(@session)))
-
+  
   # run automated tests
   # call unit_tests()
 
